@@ -5,140 +5,150 @@ import {
   Alert,
   Image,
   Linking,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-export default function movieDetail() {
+export default function MovieDetail() {
   const { id } = useLocalSearchParams();
 
-  const findMovie = movies.find((movie) => movie.id === Number(id));
-  const findMovieURL = findMovie?.trailerUrl;
+  const movie = movies.find((item) => item.id === Number(id));
 
-  function handleTrailer() {
-    const handlePress = async () => {
-      if (findMovieURL) {
-        const supported = await Linking.canOpenURL(findMovieURL);
+  if (!movie) {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: "white" }}>Filme não encontrado.</Text>
+      </View>
+    );
+  }
 
-        if (supported) {
-          await Linking.openURL(findMovieURL);
-        } else {
-          Alert.alert("Não foi possível abrir o trailer.");
-        }
+  async function handleTrailer() {
+    if (movie?.trailerUrl) {
+      const supported = await Linking.canOpenURL(movie.trailerUrl);
+      if (supported) {
+        await Linking.openURL(movie.trailerUrl);
+      } else {
+        Alert.alert("Erro", "Não foi possível abrir o trailer.");
       }
-    };
-    handlePress();
+    } else {
+      Alert.alert("Aviso", "Trailer indisponível.");
+    }
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safe}>
-        <LinearGradient
-          colors={["#0A0C26", "#1A1040", "#0A0C26"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          <View style={styles.container}>
-            <Image source={findMovie?.background} style={styles.background} />
-            <View style={styles.contentText}>
-              <Text style={styles.movieTitle}>{findMovie?.title}</Text>
-              <Text style={styles.movieInfo}>
-                {findMovie?.year} • {findMovie?.genre} • {findMovie?.timeInMin}{" "}
-                mins
-              </Text>
-              <Text style={styles.directedBy}>
-                Dirigido por {"\n"}{" "}
-                <Text style={styles.directorName}>{findMovie?.directedBy}</Text>
-              </Text>
-              <Text style={styles.sinopse}>
-                Sinopse {"\n"}{" "}
-                <Text style={styles.sinopseText}>{findMovie?.sinopse}</Text>
-              </Text>
+    <LinearGradient
+      colors={["#0A0C26", "#1A1040", "#0A0C26"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Image
+          source={movie.background}
+          style={styles.background}
+          resizeMode="cover"
+        />
+
+        <View style={styles.container}>
+          <View style={styles.contentText}>
+            <Text style={styles.movieTitle}>{movie.title}</Text>
+
+            <Text style={styles.movieInfo}>
+              {movie.year} • {movie.genre} • {movie.timeInMin} mins
+            </Text>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Dirigido por</Text>
+              <Text style={styles.value}>{movie.directedBy}</Text>
             </View>
-            <TouchableOpacity style={styles.button} onPress={handleTrailer}>
-              <Text style={styles.buttonText}>Assista ao trailer</Text>
-            </TouchableOpacity>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Sinopse</Text>
+              <Text style={styles.value}>{movie.sinopse}</Text>
+            </View>
           </View>
-        </LinearGradient>
-      </SafeAreaView>
-    </SafeAreaProvider>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleTrailer}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Assista ao trailer</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "black",
-  },
   gradient: {
     flex: 1,
   },
-  container: {
+  center: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0A0C26",
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   background: {
-    width: 396,
-    height: 200,
+    width: "100%",
+    height: 250,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   contentText: {
-    paddingHorizontal: 12,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   movieTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
-    paddingTop: 14,
-    paddingBottom: 4,
+    marginTop: 16,
     color: "white",
   },
   movieInfo: {
     color: "#8C8C8C",
-    fontSize: 12,
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 20,
   },
-  directedBy: {
-    alignSelf: "flex-start",
-    textAlign: "justify",
-    fontWeight: "800",
-    color: "#D9D9D9",
+  section: {
+    marginBottom: 20,
     width: "100%",
-    marginTop: 36,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
   },
-  directorName: {
-    fontWeight: "medium",
-  },
-  sinopse: {
-    alignSelf: "flex-start",
-    textAlign: "justify",
+  label: {
     color: "#D9D9D9",
     fontWeight: "800",
-    width: "100%",
-    paddingTop: 12,
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-    marginBottom: 36,
+    fontSize: 16,
+    marginBottom: 4,
   },
-  sinopseText: {
-    fontWeight: "medium",
-    marginTop: 12,
+  value: {
+    color: "#D9D9D9",
+    fontWeight: "normal",
+    fontSize: 14,
+    textAlign: "justify",
+    lineHeight: 22,
   },
   button: {
     backgroundColor: "#0A0C26",
-    padding: 20,
-    marginHorizontal: 12,
+    paddingVertical: 16,
     borderRadius: 8,
     borderColor: "#d9d9d93b",
     borderWidth: 2,
+    marginTop: 20,
+    alignItems: "center",
   },
   buttonText: {
     color: "#d9d9d9ff",
-    textAlign: "center",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

@@ -1,7 +1,7 @@
 import { Movie, movies } from "@/data/movieList";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   FlatList,
   Image,
@@ -10,141 +10,138 @@ import {
   Text,
   TextInput,
   View,
+  TouchableOpacity,
 } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Home() {
-  const [movieSearch, movieSearchState] = useState("");
+  const [movieSearch, setMovieSearch] = useState("");
+
+  // MELHORIA: useMemo para evitar re-cálculos desnecessários
+  const filteredMovies = useMemo(() => {
+    const searchLower = movieSearch.toLowerCase();
+    return movies.filter((movie) =>
+      movie.title.toLowerCase().includes(searchLower)
+    );
+  }, [movieSearch]);
 
   function renderMovie({ item }: ListRenderItemInfo<Movie>) {
     return (
-      <View style={styles.movieItem}>
-        <Link href={`./movies/${item.id}`}>
+      <Link href={`./movies/${item.id}`} asChild>
+        <TouchableOpacity style={styles.movieItem}>
           <Image source={item.poster} style={styles.img} />
           <View style={styles.viewTitle}>
-            <Text style={styles.movieTitle}>{item.title}</Text>
+            <Text style={styles.movieTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
           </View>
-        </Link>
-      </View>
+        </TouchableOpacity>
+      </Link>
     );
   }
 
-  function searchMovie(movies: Movie[], movieSearch: string) {
-    const movieSearchMin = movieSearch.toLocaleLowerCase();
-
-    return movies.filter((movies) => {
-      const movieTitleMin = movies.title.toLocaleLowerCase();
-      return movieTitleMin.includes(movieSearchMin);
-    });
-  }
-
   return (
-    <SafeAreaProvider>
+    <LinearGradient
+      colors={["#0A0C26", "#1A1040", "#0A0C26"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
       <SafeAreaView style={styles.safe}>
-        <LinearGradient
-          colors={["#0A0C26", "#1A1040", "#0A0C26"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        >
-          <View style={styles.container}>
-            <Text style={styles.title}>Lista de Filmes</Text>
-            <View style={styles.search}>
-              <Text style={styles.titleInputSearch}>Procurando por algo?</Text>
-              <TextInput
-                style={styles.inputSearch}
-                placeholder="Procurar por um filme..."
-                placeholderTextColor={"#d9d9d982"}
-                onChangeText={movieSearchState}
-              />
-            </View>
-            <FlatList
-              data={searchMovie(movies, movieSearch)}
-              renderItem={renderMovie}
-              numColumns={2}
-              contentContainerStyle={styles.flatListContent}
-              style={styles.flatList}
-              keyExtractor={(item) => item.id.toString()}
+        <View style={styles.container}>
+          <Text style={styles.title}>Lista de Filmes</Text>
+
+          <View style={styles.search}>
+            <Text style={styles.titleInputSearch}>Procurando por algo?</Text>
+            <TextInput
+              style={styles.inputSearch}
+              placeholder="Procurar por um filme..."
+              placeholderTextColor={"#d9d9d982"}
+              onChangeText={setMovieSearch}
+              value={movieSearch}
+              autoCorrect={false}
             />
           </View>
-        </LinearGradient>
+
+          <FlatList
+            data={filteredMovies}
+            renderItem={renderMovie}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: "space-between" }}
+            contentContainerStyle={styles.flatListContent}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       </SafeAreaView>
-    </SafeAreaProvider>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "black",
-  },
   gradient: {
+    flex: 1,
+  },
+  safe: {
     flex: 1,
   },
   container: {
     flex: 1,
-    padding: 10,
-    alignItems: "center",
+    paddingTop: 10,
   },
   title: {
-    width: "100%",
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
     color: "white",
+    marginBottom: 20,
   },
   search: {
     width: "100%",
-    alignContent: "flex-start",
-    paddingHorizontal: 14,
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
   titleInputSearch: {
-    width: "100%",
     fontSize: 20,
     color: "white",
-    fontWeight: "medium",
-    paddingVertical: 10,
+    fontWeight: "500",
+    marginBottom: 10,
   },
   inputSearch: {
     backgroundColor: "#1d114fff",
-    color: "#d9d9d982",
+    color: "white",
     borderRadius: 8,
     borderWidth: 2,
     borderColor: "#4A1259",
-    marginBottom: 32,
+    padding: 12,
+    fontSize: 16,
   },
   movieItem: {
-    width: "48%",
-    margin: "1%",
-    marginLeft: 8,
-    marginBottom: 30,
+    width: "47%",
+    marginBottom: 24,
     alignItems: "center",
   },
   viewTitle: {
     width: "100%",
     alignItems: "center",
-    paddingTop: 8,
-  },
-  movieUnicItem: {
-    width: "100%",
-    marginHorizontal: 6,
-    marginBottom: 30,
+    minHeight: 40,
+    marginTop: 8,
   },
   movieTitle: {
     color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
   },
   img: {
-    width: 160,
-    height: 230,
-    borderRadius: 6,
+    width: "100%",
+    height: 250,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#8C8C8C",
-  },
-  flatList: {
-    width: "100%",
+    resizeMode: "contain",
   },
   flatListContent: {
-    justifyContent: "space-evenly",
-    paddingHorizontal: 5,
+    paddingBottom: 40,
+    paddingHorizontal: 16,
   },
 });
